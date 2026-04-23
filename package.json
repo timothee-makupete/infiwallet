@@ -1,0 +1,28 @@
+{
+  "name": "infiwallet",
+  "version": "1.0.0",
+  "private": true,
+  "description": "InfiWallet — fintech platform monorepo",
+  "scripts": {
+    "build": "pnpm --filter @infiwallet/types build && pnpm --filter @infiwallet/validation build && pnpm --filter @infiwallet/utils build && pnpm -r --filter \"./services/*\" build && pnpm -r --filter \"./apps/*\" build",
+    "dev": "pnpm run --parallel --filter \"./services/*\" --filter \"./apps/*\" dev",
+    "dev:services": "pnpm run --parallel --filter \"./services/*\" dev",
+    "dev:apps": "pnpm run --parallel --filter \"./apps/*\" dev",
+    "db:migrate": "pnpm run db:migrate:user && pnpm run db:migrate:wallet && pnpm run db:migrate:kyc",
+    "db:migrate:user": "pnpm --filter @infiwallet/user-service exec prisma migrate deploy",
+    "db:migrate:wallet": "pnpm --filter @infiwallet/wallet-service exec prisma migrate deploy",
+    "db:migrate:kyc": "pnpm --filter @infiwallet/kyc-service exec prisma migrate deploy",
+    "db:push": "pnpm run db:push:user && pnpm run db:push:wallet && pnpm run db:push:kyc",
+    "db:push:user": "pnpm --filter @infiwallet/user-service exec prisma db push",
+    "db:push:wallet": "pnpm --filter @infiwallet/wallet-service exec prisma db push",
+    "db:push:kyc": "pnpm --filter @infiwallet/kyc-service exec prisma db push",
+    "db:seed": "pnpm --filter @infiwallet/user-service run db:seed && pnpm --filter @infiwallet/kyc-service run db:seed",
+    "db:generate": "pnpm --filter @infiwallet/user-service exec prisma generate && pnpm --filter @infiwallet/wallet-service exec prisma generate && pnpm --filter @infiwallet/kyc-service exec prisma generate",
+    "lint": "pnpm -r run lint",
+    "test": "pnpm -r run test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.14.4"
+}
