@@ -27,7 +27,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const token = useAdminAuth((s) => s.token);
   const setToken = useAdminAuth((s) => s.setToken);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   useEffect(() => {
