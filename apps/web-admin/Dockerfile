@@ -3,34 +3,32 @@ FROM node:20-alpine AS base
 # Install pnpm
 RUN npm install -g pnpm
 
-FROM base AS builder
-
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY pnpm-lock.yaml ./
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY packages ./packages
+COPY utils ./utils
+COPY validation ./validation
+COPY apps ./apps
 
-# Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy source
-COPY . .
+WORKDIR /app/apps/web-admin
+RUN pnpm --filter @infiwallet/web-admin build
 
-# Build
-RUN pnpm run build
+FROM node:20-alpine AS production
 
-FROM base AS production
+# Install pnpm
+RUN npm install -g pnpm
 
-WORKDIR /app
+WORKDIR /app/apps/web-admin
 
-# Copy built files
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.ts ./
+COPY --from=0 /app/node_modules ./node_modules
+COPY --from=0 /app/apps/web-admin/.next ./.next
+COPY --from=0 /app/apps/web-admin/package.json ./package.json
+COPY --from=0 /app/apps/web-admin/public ./public
+COPY --from=0 /app/apps/web-admin/next.config.ts ./next.config.ts
 
-EXPOSE 3018
+EXPOSE 3010
 
 CMD ["pnpm", "start"]

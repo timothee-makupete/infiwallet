@@ -3,31 +3,29 @@ FROM node:20-alpine AS base
 # Install pnpm
 RUN npm install -g pnpm
 
-FROM base AS builder
-
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY pnpm-lock.yaml ./
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY packages ./packages
+COPY utils ./utils
+COPY validation ./validation
+COPY services ./services
 
-# Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy source
-COPY . .
+WORKDIR /app/services/kyc-service
+RUN pnpm --filter @infiwallet/kyc-service build
 
-# Build
-RUN pnpm run build
+FROM node:20-alpine AS production
 
-FROM base AS production
+# Install pnpm
+RUN npm install -g pnpm
 
-WORKDIR /app
+WORKDIR /app/services/kyc-service
 
-# Copy built files
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
+COPY --from=0 /app/node_modules ./node_modules
+COPY --from=0 /app/services/kyc-service/dist ./dist
+COPY --from=0 /app/services/kyc-service/package.json ./package.json
 
 EXPOSE 3003
 
