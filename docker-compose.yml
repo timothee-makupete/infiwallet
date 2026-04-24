@@ -4,24 +4,30 @@ services:
   postgres:
     image: postgres:15
     environment:
-      POSTGRES_DB: fintech_platform
-      POSTGRES_USER: fintech_user
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: infiwallet
+      POSTGRES_USER: infiwallet
+      POSTGRES_PASSWORD: infiwallet_dev
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     networks:
       - fintech-network
 
   redis:
     image: redis:7-alpine
+    ports:
+      - "6379:6379"
     networks:
       - fintech-network
 
   rabbitmq:
     image: rabbitmq:3-management
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_USER: infiwallet
+      RABBITMQ_DEFAULT_PASS: infiwallet_dev
+    ports:
+      - "5672:5672"
     networks:
       - fintech-network
 
