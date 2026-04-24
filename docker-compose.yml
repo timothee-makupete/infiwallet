@@ -1,41 +1,110 @@
+# docker-compose.prod.yml
+
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:15
     environment:
-      POSTGRES_DB: infiwallet
-      POSTGRES_USER: infiwallet
-      POSTGRES_PASSWORD: infiwallet_dev
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: fintech_platform
+      POSTGRES_USER: fintech_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - pg_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U infiwallet -d infiwallet"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - fintech-network
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    networks:
+      - fintech-network
 
   rabbitmq:
-    image: rabbitmq:3-management-alpine
-    ports:
-      - "5672:5672"
-      - "15672:15672"
+    image: rabbitmq:3-management
     environment:
-      RABBITMQ_DEFAULT_USER: infiwallet
-      RABBITMQ_DEFAULT_PASS: infiwallet_dev
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    networks:
+      - fintech-network
 
-  # Adminer - Database Management UI
-  adminer:
-    image: adminer:latest
+  api-gateway:
+    build: ./services/api-gateway
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/fintech_platform?schema=api_gateway
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
     ports:
-      - "8080:8080"
+      - "3018:3018"
     depends_on:
       - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - fintech-network
+
+  user-service:
+    build: ./services/user-service
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/fintech_platform?schema=user_management
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - fintech-network
+
+  wallet-service:
+    build: ./services/wallet-service
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/fintech_platform?schema=wallet
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - fintech-network
+
+  kyc-service:
+    build: ./services/kyc-service
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/fintech_platform?schema=kyc
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - fintech-network
+
+  web-user:
+    build: ./apps/web-user
+    environment:
+      NEXT_PUBLIC_API_URL: http://api-gateway:3018
+    ports:
+      - "3018:3018"
+    depends_on:
+      - api-gateway
+    networks:
+      - fintech-network
+
+  web-admin:
+    build: ./apps/web-admin
+    environment:
+      NEXT_PUBLIC_API_URL: http://api-gateway:3018
+    ports:
+      - "3002:3018"
+    depends_on:
+      - api-gateway
+    networks:
+      - fintech-network
 
 volumes:
-  pg_data:
+  postgres_data:
+
+networks:
+  fintech-network:
+    driver: bridge

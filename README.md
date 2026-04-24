@@ -68,6 +68,31 @@ Monorepo for the InfiWallet fintech platform: NestJS microservices (user, wallet
 
    Set `NEXT_PUBLIC_API_URL=http://localhost:3018` for both apps.
 
+## Deployment
+
+1. Ensure Docker is running.
+
+2. Build the project:
+
+   ```bash
+   pnpm install
+   pnpm run build
+   ```
+
+3. Set environment variables in `.env` (see docker-compose.yml for required vars).
+
+4. Deploy with Docker Compose:
+
+   ```bash
+   docker-compose up --build
+   ```
+
+   This will start all services, databases, and web apps.
+
+   - API Gateway: http://localhost:3018
+   - Web User: http://localhost:3018
+   - Web Admin: http://localhost:3002
+
 ## Default admin (after seed)
 
 - Email: `admin@infiwallet.local` (or `SEED_ADMIN_EMAIL`)
